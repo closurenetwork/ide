@@ -5,6 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StudioClient } from "./studio-client.js";
+import { projectExperienceTree } from "./experience-project.js";
 
 /**
  * Closure Platform IDE MCP (stdio).
@@ -13,6 +14,8 @@ import { StudioClient } from "./studio-client.js";
  *   platform_status
  *   platform_knowledge_skills_pull
  *   platform_experience_scaffold
+ *   platform_experience_get
+ *   platform_craft_start
  *   platform_collect_start
  *   platform_build_start
  *   platform_workflows_list
@@ -22,6 +25,7 @@ import { StudioClient } from "./studio-client.js";
  * Auth: STUDIO_URL + STUDIO_EMAIL + STUDIO_PASSWORD → session cookie.
  * Keep L1 closure-kit MCP separate for gateway DataObjects.
  * After source changes: `pnpm --filter @closure-platform/mcp-server build` then reload MCP in Cursor.
+ * Customer install: `npx @closure-platform/ide init` (closurenetwork/ide).
  */
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -108,11 +112,17 @@ async function main(): Promise<void> {
       title: "Closure status",
       description:
         "Login to Closure and return session identity (email, org, plan). Use as a health check before other platform_* tools.",
-      inputSchema: {},
+      inputSchema: {
+        orgId: z
+          .string()
+          .optional()
+          .describe("Pin session org (e.g. org_gtmsignal) before /me"),
+      },
     },
-    async () => {
+    async (args) => {
       try {
         const api = client();
+        await api.pinOrg(args.orgId);
         const { ok, status, json } = await api.api<Record<string, unknown>>(
           "/api/auth/me",
         );
@@ -144,6 +154,7 @@ async function main(): Promise<void> {
       description:
         "Fetch org Knowledge skills from Closure and optionally write Closure-way skill packs to disk for Cursor/Claude. Returns skill list + write paths.",
       inputSchema: {
+        orgId: z.string().optional().describe("Pin session org first"),
         writeDir: z
           .string()
           .optional()
@@ -164,6 +175,7 @@ async function main(): Promise<void> {
     async (args) => {
       try {
         const api = client();
+        await api.pinOrg(args.orgId);
         const { ok, status, json } = await api.api<{
           sources?: Array<{
             id: string;
@@ -282,11 +294,13 @@ async function main(): Promise<void> {
           .optional()
           .default("console")
           .describe("Theme surface hint"),
+        orgId: z.string().optional().describe("Pin session org first"),
       },
     },
     async (args) => {
       try {
         const api = client();
+        await api.pinOrg(args.orgId);
         const { ok, status, json } = await api.api<Record<string, unknown>>(
           "/api/ide/experience/scaffold",
           {
@@ -337,11 +351,13 @@ async function main(): Promise<void> {
           .optional()
           .default("assistant")
           .describe("Form projection mode for the embed"),
+        orgId: z.string().optional().describe("Pin session org first"),
       },
     },
     async (args) => {
       try {
         const api = client();
+        await api.pinOrg(args.orgId);
         const { ok, status, json } = await api.api<{
           workflows?: Array<{ id: string; name: string; kind?: string }>;
         }>("/api/workflows");
@@ -401,6 +417,138 @@ async function main(): Promise<void> {
   );
 
   server.registerTool(
+    "platform_experience_get",
+    {
+      title: "Inspect Experience graph",
+      description:
+        "Read an Experience page tree + component props (targeted craft). Prefer view=tree. Pass orgId every call (e.g. org_gtmsignal). Does not rebuild.",
+      inputSchema: {
+        orgId: z
+          .string()
+          .describe("Org that owns the Experience (required pin)"),
+        slug: z
+          .string()
+          .describe("Experience slug, e.g. gtmsignal-marketing"),
+        pageRoute: z
+          .string()
+          .optional()
+          .describe("Page route to project (default: home)"),
+        view: z
+          .enum(["tree", "full"])
+          .optional()
+          .default("tree")
+          .describe("tree = page tree + props; full = raw graph"),
+      },
+    },
+    async (args) => {
+      try {
+        const api = client();
+        await api.switchOrg(args.orgId);
+        const { ok, status, json } = await api.getExperience(args.slug);
+        if (!ok) return asJson({ ok: false, status, error: json });
+        const graph = (json.graph || {}) as Record<string, unknown>;
+        if (args.view === "full") {
+          return asJson({
+            ok: true,
+            orgId: json.orgId ?? args.orgId,
+            slug: args.slug,
+            source: json.source,
+            graph,
+            openUrl: `${api.baseUrl}/experiences/${args.slug}`,
+          });
+        }
+        return asJson(
+          projectExperienceTree({
+            orgId: String(json.orgId || args.orgId),
+            slug: args.slug,
+            source: typeof json.source === "string" ? json.source : undefined,
+            graph,
+            pageRoute: args.pageRoute,
+            studioUrl: api.baseUrl,
+          }),
+        );
+      } catch (e) {
+        return asError(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "platform_craft_start",
+    {
+      title: "Targeted craft (props patch)",
+      description:
+        "Shallow-merge props on one component DataObject via graph PUT. Use after platform_experience_get. Never use for full Experience rebuilds.",
+      inputSchema: {
+        orgId: z.string().describe("Org pin (required)"),
+        componentId: z
+          .string()
+          .describe("Component @id (urn:uuid:…) from experience_get tree"),
+        propsPatch: z
+          .record(z.unknown())
+          .describe("Shallow-merged into data.props"),
+        slug: z
+          .string()
+          .optional()
+          .describe("Experience slug for openUrl tip"),
+        name: z.string().optional().describe("Optional display name update"),
+      },
+    },
+    async (args) => {
+      try {
+        const api = client();
+        await api.switchOrg(args.orgId);
+        const got = await api.getObject(args.componentId);
+        if (!got.ok || !got.json.object) {
+          return asJson({
+            ok: false,
+            status: got.status,
+            error: got.json.error || got.json,
+          });
+        }
+        const obj = got.json.object as {
+          id: string;
+          name?: string;
+          schemaRef?: string;
+          state?: string;
+          data?: Record<string, unknown>;
+          links?: unknown;
+        };
+        const data = { ...(obj.data || {}) };
+        const prevProps =
+          data.props && typeof data.props === "object" && !Array.isArray(data.props)
+            ? (data.props as Record<string, unknown>)
+            : {};
+        data.props = { ...prevProps, ...args.propsPatch };
+        const put = await api.putObject(args.componentId, {
+          id: obj.id,
+          name: args.name || obj.name,
+          schemaRef: obj.schemaRef,
+          state: obj.state,
+          data,
+          links: obj.links,
+        });
+        if (!put.ok) {
+          return asJson({ ok: false, status: put.status, error: put.json });
+        }
+        const slug = args.slug;
+        return asJson({
+          ok: true,
+          orgId: args.orgId,
+          componentId: args.componentId,
+          object: put.json.object,
+          openUrl: slug
+            ? `${api.baseUrl}/experiences/${slug}`
+            : `${api.baseUrl}/experiences`,
+          tip: "Hard-refresh the Experience URL. Prefer craft over wf-build-experience for copy/IA tweaks.",
+        });
+      } catch (e) {
+        return asError(e);
+      }
+    },
+  );
+
+  server.registerTool(
     "platform_build_start",
     {
       title: "Start governed build program",
@@ -440,12 +588,7 @@ async function main(): Promise<void> {
     async (args) => {
       try {
         const api = client();
-        if (args.orgId) {
-          await api.api("/api/auth/orgs", {
-            method: "POST",
-            body: JSON.stringify({ orgId: args.orgId }),
-          });
-        }
+        await api.pinOrg(args.orgId);
         const brief = args.brand
           ? {
               brand: args.brand,
@@ -494,12 +637,7 @@ async function main(): Promise<void> {
     async (args) => {
       try {
         const api = client();
-        if (args.orgId) {
-          await api.api("/api/auth/orgs", {
-            method: "POST",
-            body: JSON.stringify({ orgId: args.orgId }),
-          });
-        }
+        await api.pinOrg(args.orgId);
         const { ok, status, json } = await api.api<{
           orgId?: string;
           workflows?: Array<{

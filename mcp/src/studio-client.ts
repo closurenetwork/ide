@@ -52,6 +52,32 @@ export class StudioClient {
     }
   }
 
+  /** Pin session org when the tool caller passes orgId. */
+  async pinOrg(orgId?: string): Promise<string | undefined> {
+    if (!orgId) return undefined;
+    await this.switchOrg(orgId);
+    return orgId;
+  }
+
+  async getExperience(slug: string) {
+    return this.api<Record<string, unknown>>(
+      `/api/experience/${encodeURIComponent(slug)}`,
+    );
+  }
+
+  async getObject(id: string) {
+    return this.api<{ ok?: boolean; object?: Record<string, unknown>; error?: string }>(
+      `/api/graph/objects/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async putObject(id: string, body: Record<string, unknown>) {
+    return this.api<{ ok?: boolean; object?: Record<string, unknown>; error?: string }>(
+      `/api/graph/objects/${encodeURIComponent(id)}`,
+      { method: "PUT", body: JSON.stringify(body) },
+    );
+  }
+
   async ensureSession(): Promise<void> {
     if (this.cookie) return;
     const res = await fetch(`${this.baseUrl}/api/auth/login`, {
