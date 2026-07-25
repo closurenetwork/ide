@@ -2,11 +2,11 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { exportDoctrine } from "../export-doctrine.mjs";
-import { mcpBin, pkgRoot } from "../paths.mjs";
+import { mcpBin } from "../paths.mjs";
 
 export async function cmdInit(args) {
   const written = await exportDoctrine(args);
-  console.log("Doctrine projected:");
+  console.log("Installed Closure IDE rails:");
   for (const p of written) console.log(`  ${p}`);
 
   if (!args.noMcp) {
@@ -14,49 +14,43 @@ export async function cmdInit(args) {
     if (args.globalMcp) {
       const path = join(homedir(), ".cursor", "mcp.json");
       await mergeMcpJson(path, entry);
-      console.log(`\nMCP merged into ${path}`);
+      console.log(`\nMCP config: ${path}`);
     } else {
       const path = join(args.cwd, ".cursor", "mcp.json");
       await mergeMcpJson(path, entry);
-      console.log(`\nMCP merged into ${path}`);
-      console.log("(Use --global-mcp for ~/.cursor/mcp.json)");
+      console.log(`\nMCP config: ${path}`);
     }
   }
 
   console.log(`
 Next:
-  1. Set STUDIO_URL / STUDIO_EMAIL / STUDIO_PASSWORD (or API key when available)
+  1. Set STUDIO_EMAIL + STUDIO_PASSWORD in the MCP env (STUDIO_URL if not SaaS default)
   2. Reload MCP in your IDE
-  3. Run tool platform_status
-  4. Prefer platform_* tools — product lives on Closure SaaS, not local Experience .ts
-
-Package: ${pkgRoot()}
+  3. Call platform_status
 `);
   return 0;
 }
 
+/** Customer path is always npx. Maintainers: CLOSURE_IDE_LOCAL=1 */
 function mcpEntry() {
-  // Prefer npx when published; absolute node path for local dogfood
-  const useNpx = process.env.CLOSURE_IDE_USE_NPX === "1";
-  if (useNpx) {
+  const env = {
+    STUDIO_URL: process.env.STUDIO_URL || "https://closureapps.com/console",
+    STUDIO_EMAIL: process.env.STUDIO_EMAIL || "you@yourcompany.com",
+    STUDIO_PASSWORD: process.env.STUDIO_PASSWORD || "",
+  };
+
+  if (process.env.CLOSURE_IDE_LOCAL === "1") {
     return {
-      command: "npx",
-      args: ["-y", "@closure-platform/ide", "mcp-stdio"],
-      env: {
-        STUDIO_URL: process.env.STUDIO_URL || "https://closureapps.com/console",
-        STUDIO_EMAIL: process.env.STUDIO_EMAIL || "you@yourcompany.com",
-        STUDIO_PASSWORD: process.env.STUDIO_PASSWORD || "",
-      },
+      command: "node",
+      args: [mcpBin()],
+      env,
     };
   }
+
   return {
-    command: "node",
-    args: [mcpBin()],
-    env: {
-      STUDIO_URL: process.env.STUDIO_URL || "https://closureapps.com/console",
-      STUDIO_EMAIL: process.env.STUDIO_EMAIL || "you@yourcompany.com",
-      STUDIO_PASSWORD: process.env.STUDIO_PASSWORD || "",
-    },
+    command: "npx",
+    args: ["-y", "@closure-platform/ide", "mcp-stdio"],
+    env,
   };
 }
 

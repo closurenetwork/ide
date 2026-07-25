@@ -5,32 +5,20 @@ import { cmdExport } from "./commands/export.mjs";
 import { pkgRoot } from "./paths.mjs";
 
 const HELP = `
-@closure-platform/ide — Closure Platform IDE kit
+@closure-platform/ide
 
-Usage:
-  npx @closure-platform/ide <command> [options]
+  npx @closure-platform/ide init     # one-time setup
+  npx @closure-platform/ide update   # refresh rails
+  npx @closure-platform/ide doctor   # check setup
 
-Commands:
-  init      Install MCP snippet + project doctrine into the current repo
-  update    Refresh doctrine files from this package (keeps MCP config)
-  export    Write host adapters only (cursor | claude | agents | all)
-  doctor    Check MCP binary, doctrine files, and optional platform_status
-  mcp       Print how to run the Platform MCP server
-  help      Show this help
+Options:
+  --cwd <path>      target directory (default: .)
+  --global-mcp      write ~/.cursor/mcp.json
+  --no-mcp          rails only
+  --hosts <list>    cursor,claude,agents
 
-Options (init / update / export):
-  --cwd <path>         Target directory (default: process.cwd())
-  --global-mcp         Merge MCP entry into ~/.cursor/mcp.json
-  --no-mcp             Skip MCP config writes
-  --hosts <list>       comma list: cursor,claude,agents (default: all)
-
-Env for doctor / MCP:
-  STUDIO_URL           Closure console origin (default https://closureapps.com/console)
-  STUDIO_EMAIL         Session email (spike auth)
-  STUDIO_PASSWORD      Session password (spike auth)
-  CLOSURE_API_KEY      Preferred when Platform API keys land
-
-Package root: ${pkgRoot()}
+Env (MCP / doctor):
+  STUDIO_URL  STUDIO_EMAIL  STUDIO_PASSWORD
 `.trim();
 
 export async function runCli(argv) {
@@ -47,26 +35,11 @@ export async function runCli(argv) {
     case "doctor":
       return cmdDoctor(args);
     case "mcp":
-      console.log(`Run Platform MCP (stdio):
+      console.log(`MCP is started by your IDE via:
 
-  node ${pkgRoot()}/mcp/bin/platform-mcp.mjs
+  npx -y @closure-platform/ide mcp-stdio
 
-Or after npm link / publish:
-
-  npx @closure-platform/ide mcp-stdio
-  # bin alias: platform-mcp
-
-Cursor mcp.json entry:
-
-  "closure-platform": {
-    "command": "npx",
-    "args": ["-y", "@closure-platform/ide", "mcp-stdio"],
-    "env": {
-      "STUDIO_URL": "https://closureapps.com/console",
-      "STUDIO_EMAIL": "you@yourcompany.com",
-      "STUDIO_PASSWORD": "…"
-    }
-  }
+init writes this into .cursor/mcp.json for you.
 `);
       return 0;
     case "mcp-stdio": {
