@@ -1,45 +1,59 @@
-# @closure-platform/ide
+# @closure/ide
 
-Closure for your IDE. Install from npm — **never clone this repo.**
+Closure Agent Pack for your IDE. Install from npm — **never clone this repo.**
 
-This package is a **thin shell**. Skills and Closure-way playbooks live on Closure Platform (Knowledge) and refresh via MCP — not by bumping this package every week.
+This package is a **thin installer**. AGENTS.md, Cursor rules, and Closure-way skills are fetched from Closure Platform Knowledge (`GET /api/public/ide/pack`) — not hardcoded here.
 
 ## Install
 
 ```bash
-npx @closure-platform/ide init
+npx @closure/ide init
 ```
 
-## Auth — prefer Connect
+Then reload MCP → **Connect** → call `platform_status` → `platform_knowledge_skills_pull`.
 
-Same shape as Figma’s blue **Connect** button: remote MCP + OAuth.
+### On-prem / local Studio
+
+```bash
+STUDIO_URL=http://localhost:3021 npx @closure/ide init
+# or
+CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack npx @closure/ide init
+```
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `init` | Fetch pack, write rails, register MCP |
+| `sync` | Re-fetch pack (Knowledge updates) |
+| `status` | Local + remote pack health |
+| `doctor` / `update` | Aliases of `status` / `sync` |
+
+## Auth — prefer Connect
 
 ```json
 {
   "mcpServers": {
     "closure-platform": {
-      "url": "https://closureapps.com/console/api/mcp"
+      "url": "https://closureapps.com/console/api/mcp",
+      "type": "http"
     }
   }
 }
 ```
 
-Local dogfood: `"url": "http://localhost:3021/api/mcp"`.
-
-1. Reload MCP → Cursor shows **Connect**  
-2. Browser opens Studio consent → Allow  
-3. `platform_status` — pulls skills when stale  
-
 ### Fallback — stdio + API key
 
-Studio → **Account → IDE** → Generate key (`csk_…`), then:
+```bash
+npx @closure/ide init --stdio
+```
 
 ```json
 {
   "mcpServers": {
     "closure-platform": {
       "command": "npx",
-      "args": ["-y", "@closure-platform/ide", "mcp-stdio"],
+      "args": ["-y", "@closure/ide", "mcp-stdio"],
       "env": {
         "STUDIO_URL": "https://closureapps.com/console",
         "STUDIO_API_KEY": "csk_…"
@@ -49,27 +63,25 @@ Studio → **Account → IDE** → Generate key (`csk_…`), then:
 }
 ```
 
-## Rails
+## What gets written
 
-| Layer | Source of truth |
-|-------|-----------------|
-| Skills / Closure-way | Platform Knowledge via MCP |
-| Kit doctrine files | Bootstrap only — `npx … update` + pull |
-| Product graph | Closure APIs |
-| Brand | Org `design_system` → `--cp-*` |
+| Path | Role |
+|------|------|
+| `.closure/pack.json` | Pack version for `sync` |
+| `AGENTS.md` / `CLAUDE.md` | Always-on Closure constitution |
+| `.cursor/rules/` · `.cursor/skills/` | Cursor rails |
+| `.claude/skills/` | Claude Code rails |
+| `.github/copilot-instructions.md` | Short Copilot extract |
+| `.cursor/mcp.json` | Platform MCP registration |
 
-```bash
-npx @closure-platform/ide update
-npx @closure-platform/ide doctor
-```
+Product Experiences stay on the **graph**. Local files are adapters only.
 
 ## Related
 
 | Repo | Role |
 |------|------|
-| [platform](https://github.com/closurenetwork/platform) | Product (Studio, Experiences, MCP) |
-| [deploy](https://github.com/closurenetwork/deploy) | Self-host Helm / Terraform |
-| [versions](https://github.com/closurenetwork/versions) | Optional promote-mirror template |
+| [platform](https://github.com/closurenetwork/platform) | Studio, Knowledge, MCP, `/api/public/ide/pack` |
+| [deploy](https://github.com/closurenetwork/deploy) | Self-host |
 
 ## License
 

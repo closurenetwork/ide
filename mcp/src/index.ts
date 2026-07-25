@@ -26,7 +26,7 @@ import { projectExperienceTree } from "./experience-project.js";
  * Auth: STUDIO_API_KEY (preferred) or STUDIO_EMAIL + STUDIO_PASSWORD.
  * Keep L1 closure-kit MCP separate for gateway DataObjects.
  * After source changes: `pnpm --filter @closure-platform/mcp-server build` then reload MCP in Cursor.
- * Customer install: `npx @closure-platform/ide init` (closurenetwork/ide).
+ * Customer install: `npx @closure/ide init` (closurenetwork/ide).
  */
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");

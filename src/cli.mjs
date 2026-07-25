@@ -1,27 +1,31 @@
 import { cmdInit } from "./commands/init.mjs";
+import { cmdSync } from "./commands/sync.mjs";
 import { cmdUpdate } from "./commands/update.mjs";
+import { cmdStatus } from "./commands/status.mjs";
 import { cmdDoctor } from "./commands/doctor.mjs";
-import { cmdExport } from "./commands/export.mjs";
 import { pkgRoot } from "./paths.mjs";
 
 const HELP = `
-@closure-platform/ide
+@closure/ide — Closure Agent Pack
 
-  npx @closure-platform/ide init     # one-time setup (remote Connect by default)
-  npx @closure-platform/ide update   # refresh rails
-  npx @closure-platform/ide doctor   # check setup
+  npx @closure/ide init      # fetch pack + write rails + register MCP
+  npx @closure/ide sync      # re-fetch pack from Platform Knowledge
+  npx @closure/ide status    # local + remote pack health
+  npx @closure/ide doctor    # alias of status
+  npx @closure/ide update    # alias of sync
 
 Options:
   --cwd <path>      target directory (default: .)
   --global-mcp      write ~/.cursor/mcp.json
   --no-mcp          rails only
   --stdio           write stdio MCP entry instead of remote url
-  --hosts <list>    cursor,claude,agents
+  --hosts <list>    cursor,claude,agents,copilot
 
 Env:
-  STUDIO_MCP_URL / STUDIO_URL   remote Connect (default SaaS console /api/mcp)
-  STUDIO_API_KEY                stdio Bearer fallback
-  STUDIO_EMAIL / STUDIO_PASSWORD  legacy stdio login
+  STUDIO_URL / CLOSURE_STUDIO_URL   console base (default SaaS)
+  CLOSURE_IDE_PACK_URL              override GET …/api/public/ide/pack
+  STUDIO_MCP_URL                    override MCP Connect URL
+  STUDIO_API_KEY                    stdio Bearer fallback
 `.trim();
 
 export async function runCli(argv) {
@@ -31,19 +35,20 @@ export async function runCli(argv) {
   switch (cmd) {
     case "init":
       return cmdInit(args);
+    case "sync":
+      return cmdSync(args);
     case "update":
       return cmdUpdate(args);
-    case "export":
-      return cmdExport(args);
+    case "status":
+      return cmdStatus(args);
     case "doctor":
       return cmdDoctor(args);
     case "mcp":
       console.log(`Preferred: remote URL in mcp.json (Cursor Connect).
 
-  { "mcpServers": { "closure-platform": { "url": "https://closureapps.com/console/api/mcp" } } }
+  { "mcpServers": { "closure-platform": { "url": "https://closureapps.com/console/api/mcp", "type": "http" } } }
 
-Stdio fallback: npx -y @closure-platform/ide mcp-stdio
-init writes the remote entry by default (\`init --stdio\` for local process).
+Stdio fallback: npx -y @closure/ide mcp-stdio
 `);
       return 0;
     case "mcp-stdio": {
@@ -68,7 +73,8 @@ function parseArgs(rest) {
     globalMcp: false,
     noMcp: false,
     stdio: false,
-    hosts: ["cursor", "claude", "agents"],
+    hosts: ["cursor", "claude", "agents", "copilot"],
+    packUrl: undefined,
   };
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
@@ -76,6 +82,7 @@ function parseArgs(rest) {
     else if (a === "--global-mcp") out.globalMcp = true;
     else if (a === "--no-mcp") out.noMcp = true;
     else if (a === "--stdio") out.stdio = true;
+    else if (a === "--pack-url") out.packUrl = rest[++i];
     else if (a === "--hosts") {
       out.hosts = String(rest[++i] || "")
         .split(",")
