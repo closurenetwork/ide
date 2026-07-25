@@ -19,10 +19,11 @@ import { projectExperienceTree } from "./experience-project.js";
  *   platform_collect_start
  *   platform_build_start
  *   platform_workflows_list
+ *   platform_workflows_create
  *   platform_agent_task
  *   platform_agent_submit
  *
- * Auth: STUDIO_URL + STUDIO_EMAIL + STUDIO_PASSWORD → session cookie.
+ * Auth: STUDIO_API_KEY (preferred) or STUDIO_EMAIL + STUDIO_PASSWORD.
  * Keep L1 closure-kit MCP separate for gateway DataObjects.
  * After source changes: `pnpm --filter @closure-platform/mcp-server build` then reload MCP in Cursor.
  * Customer install: `npx @closure-platform/ide init` (closurenetwork/ide).
@@ -92,6 +93,25 @@ You are building on **Closure Platform**. Prefer Platform MCP tools (\`platform_
 5. Product mutations go through Platform MCP / graph APIs — not Experience pack \`.ts\`.
 6. On \`waiting_ide\`, loop task → work → submit until completed / HITL.
 7. Secrets: \`platform_collect_start\` only.
+`,
+  },
+  {
+    id: "closure-way-brand",
+    name: "Closure way — brand & design system",
+    content: `# Closure way — brand & design system
+
+Organization owns one \`design_system\`. Experiences inherit. Shells consume \`--cp-*\` (CIP-S-0003).
+
+## Graph
+design_token_set[] → design_theme (light/dark) → design_system → design_spec → Experience.theme.designSystemId → runtime \`--cp-*\`
+
+## Rules
+1. One brand per Organization (Studio Branding / brand.upsert) — not per page.
+2. No product hex in React/CSS — \`var(--cp-*)\` only. No \`is{Product}\` chrome or \`--exp-{product}-*\`.
+3. Kits (\`signal-heat\`, …) set type/density/radius/componentStyles.
+4. Prove control: change accent/font/spacing tokens → first paint changes without CSS edits.
+5. Do not rewrite marketing homepage IA when fixing brand chrome — bind tokens only.
+6. Knowledge: \`ks_closure_brand_system\`.
 `,
   },
 ];
@@ -164,8 +184,9 @@ async function main(): Promise<void> {
         includeBundled: z
           .boolean()
           .optional()
-          .default(true)
-          .describe("Also write bundled Closure-way doctrine skills"),
+          .describe(
+            "Write hardcoded MCP fallback skills. Default false when Closure Knowledge returns skills; true only as offline fallback.",
+          ),
         query: z
           .string()
           .optional()
@@ -175,7 +196,26 @@ async function main(): Promise<void> {
     async (args) => {
       try {
         const api = client();
-        await api.pinOrg(args.orgId);
+        // Platform doctrine lives on org_closure (read-through for tenants).
+        await api.switchOrg("org_closure").catch(() => undefined);
+        const platformKnow = await api.api<{
+          sources?: Array<{
+            id: string;
+            name: string;
+            role?: string;
+            libraryId?: string;
+          }>;
+        }>("/api/knowledge");
+        const platformSkills = (platformKnow.json.sources || []).filter(
+          (s) => s.role === "skill",
+        );
+
+        if (args.orgId && args.orgId !== "org_closure") {
+          await api.pinOrg(args.orgId);
+        } else if (args.orgId) {
+          await api.pinOrg(args.orgId);
+        }
+
         const { ok, status, json } = await api.api<{
           sources?: Array<{
             id: string;
@@ -185,9 +225,21 @@ async function main(): Promise<void> {
           }>;
           libraries?: unknown[];
         }>("/api/knowledge");
-        if (!ok) return asJson({ ok: false, status, error: json });
+        if (!ok && !platformKnow.ok) {
+          return asJson({ ok: false, status, error: json });
+        }
 
-        const skills = (json.sources || []).filter((s) => s.role === "skill");
+        const tenantSkills = (json.sources || []).filter(
+          (s) => s.role === "skill",
+        );
+        const byId = new Map<
+          string,
+          { id: string; name: string; role?: string }
+        >();
+        for (const s of [...platformSkills, ...tenantSkills]) {
+          byId.set(s.id, s);
+        }
+        const skills = [...byId.values()];
         let searchHits: unknown[] = [];
         if (args.query?.trim()) {
           const s = await api.api<{ hits?: unknown[] }>("/api/knowledge/search", {
@@ -200,16 +252,22 @@ async function main(): Promise<void> {
           if (s.ok) searchHits = s.json.hits || [];
         }
 
-        // Load skill bodies when listing detail one-by-one (cap)
+        // Load skill bodies — pin org_closure for platform ids
         const detailed: Array<{
           id: string;
           name: string;
           content?: string;
         }> = [];
-        for (const s of skills.slice(0, 24)) {
-          const d = await api.api<{ source?: { id: string; name: string; content?: string } }>(
-            `/api/knowledge?sourceId=${encodeURIComponent(s.id)}`,
-          );
+        for (const s of skills.slice(0, 40)) {
+          const isPlatform = platformSkills.some((p) => p.id === s.id);
+          if (isPlatform) {
+            await api.switchOrg("org_closure").catch(() => undefined);
+          } else if (args.orgId) {
+            await api.pinOrg(args.orgId);
+          }
+          const d = await api.api<{
+            source?: { id: string; name: string; content?: string };
+          }>(`/api/knowledge?sourceId=${encodeURIComponent(s.id)}`);
           if (d.ok && d.json.source) {
             detailed.push({
               id: d.json.source.id,
@@ -220,6 +278,7 @@ async function main(): Promise<void> {
             detailed.push({ id: s.id, name: s.name });
           }
         }
+        if (args.orgId) await api.pinOrg(args.orgId).catch(() => undefined);
 
         const writeDir =
           args.writeDir ||
@@ -227,7 +286,9 @@ async function main(): Promise<void> {
           join(process.cwd(), ".cursor", "skills", "closure-platform");
 
         const written: string[] = [];
-        const includeBundled = args.includeBundled !== false;
+        const hasLive = detailed.some((d) => d.content);
+        const includeBundled =
+          args.includeBundled !== undefined ? args.includeBundled : !hasLive;
         await mkdir(writeDir, { recursive: true });
 
         if (includeBundled) {
@@ -662,6 +723,50 @@ async function main(): Promise<void> {
           buildProgram: workflows
             .filter((w) => w.id.startsWith("wf-build"))
             .map((w) => w.id),
+        });
+      } catch (e) {
+        return asError(e);
+      }
+    },
+  );
+
+  server.registerTool(
+    "platform_workflows_create",
+    {
+      title: "Create workflow from template",
+      description:
+        "Create a tenant-owned workflow from a Process (form|hybrid) or Agentic starter. Open Studio → Workflows?tab=…&wf=… to edit the graph.",
+      inputSchema: {
+        name: z.string().min(1).describe("Display name"),
+        template: z
+          .enum(["form", "hybrid", "agentic"])
+          .describe(
+            "form|hybrid = Process tab; agentic = Agentic tab. Hybrids stay Process (agents inside BPM).",
+          ),
+        orgId: z.string().optional().describe("Tenant org (not org_closure)"),
+      },
+    },
+    async (args) => {
+      try {
+        const api = client();
+        await api.pinOrg(args.orgId);
+        const { ok, status, json } = await api.api<{
+          graph?: { id: string; name: string; kind?: string };
+          error?: string;
+        }>("/api/workflows", {
+          method: "POST",
+          body: JSON.stringify({
+            name: args.name,
+            template: args.template,
+          }),
+        });
+        if (!ok) return asJson({ ok: false, status, error: json });
+        const tab = args.template === "agentic" ? "agentic" : "process";
+        return asJson({
+          ok: true,
+          graph: json.graph,
+          studioPath: `/workflows?tab=${tab}&wf=${encodeURIComponent(json.graph?.id || "")}`,
+          tip: "Edit in Studio Graph. Agentic-in-Process via agent/subprocess; Process-in-Agentic only via subprocess/trigger.",
         });
       } catch (e) {
         return asError(e);

@@ -7,7 +7,7 @@ import { pkgRoot } from "./paths.mjs";
 const HELP = `
 @closure-platform/ide
 
-  npx @closure-platform/ide init     # one-time setup
+  npx @closure-platform/ide init     # one-time setup (remote Connect by default)
   npx @closure-platform/ide update   # refresh rails
   npx @closure-platform/ide doctor   # check setup
 
@@ -15,10 +15,13 @@ Options:
   --cwd <path>      target directory (default: .)
   --global-mcp      write ~/.cursor/mcp.json
   --no-mcp          rails only
+  --stdio           write stdio MCP entry instead of remote url
   --hosts <list>    cursor,claude,agents
 
-Env (MCP / doctor):
-  STUDIO_URL  STUDIO_EMAIL  STUDIO_PASSWORD
+Env:
+  STUDIO_MCP_URL / STUDIO_URL   remote Connect (default SaaS console /api/mcp)
+  STUDIO_API_KEY                stdio Bearer fallback
+  STUDIO_EMAIL / STUDIO_PASSWORD  legacy stdio login
 `.trim();
 
 export async function runCli(argv) {
@@ -35,11 +38,12 @@ export async function runCli(argv) {
     case "doctor":
       return cmdDoctor(args);
     case "mcp":
-      console.log(`MCP is started by your IDE via:
+      console.log(`Preferred: remote URL in mcp.json (Cursor Connect).
 
-  npx -y @closure-platform/ide mcp-stdio
+  { "mcpServers": { "closure-platform": { "url": "https://closureapps.com/console/api/mcp" } } }
 
-init writes this into .cursor/mcp.json for you.
+Stdio fallback: npx -y @closure-platform/ide mcp-stdio
+init writes the remote entry by default (\`init --stdio\` for local process).
 `);
       return 0;
     case "mcp-stdio": {
@@ -63,6 +67,7 @@ function parseArgs(rest) {
     cwd: process.cwd(),
     globalMcp: false,
     noMcp: false,
+    stdio: false,
     hosts: ["cursor", "claude", "agents"],
   };
   for (let i = 0; i < rest.length; i++) {
@@ -70,6 +75,7 @@ function parseArgs(rest) {
     if (a === "--cwd") out.cwd = rest[++i];
     else if (a === "--global-mcp") out.globalMcp = true;
     else if (a === "--no-mcp") out.noMcp = true;
+    else if (a === "--stdio") out.stdio = true;
     else if (a === "--hosts") {
       out.hosts = String(rest[++i] || "")
         .split(",")

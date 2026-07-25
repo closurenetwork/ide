@@ -10,7 +10,7 @@ export async function cmdInit(args) {
   for (const p of written) console.log(`  ${p}`);
 
   if (!args.noMcp) {
-    const entry = mcpEntry();
+    const entry = mcpEntry(args);
     if (args.globalMcp) {
       const path = join(homedir(), ".cursor", "mcp.json");
       await mergeMcpJson(path, entry);
@@ -22,20 +22,53 @@ export async function cmdInit(args) {
     }
   }
 
-  console.log(`
+  const remote = !args.stdio;
+  console.log(
+    remote
+      ? `
 Next:
-  1. Set STUDIO_EMAIL + STUDIO_PASSWORD in the MCP env (STUDIO_URL if not SaaS default)
+  1. Reload MCP in Cursor — click Connect when prompted
+  2. Sign in / Allow in the browser
+  3. Call platform_status → platform_knowledge_skills_pull
+`
+      : `
+Next:
+  1. Set STUDIO_API_KEY (Account → IDE) in the MCP env — or STUDIO_EMAIL + STUDIO_PASSWORD
   2. Reload MCP in your IDE
   3. Call platform_status
-`);
+`,
+  );
   return 0;
 }
 
-/** Customer path is always npx. Maintainers: CLOSURE_IDE_LOCAL=1 */
-function mcpEntry() {
+function remoteMcpUrl() {
+  if (process.env.STUDIO_MCP_URL) {
+    return process.env.STUDIO_MCP_URL.replace(/\/$/, "");
+  }
+  const base = (
+    process.env.STUDIO_URL || "https://closureapps.com/console"
+  ).replace(/\/$/, "");
+  return `${base}/api/mcp`;
+}
+
+/**
+ * Default: remote URL (Cursor Connect / OAuth).
+ * `--stdio` or CLOSURE_IDE_STDIO=1 → local process + env auth.
+ * CLOSURE_IDE_LOCAL=1 → node path to local mcp bin (maintainers).
+ */
+function mcpEntry(args) {
+  const wantStdio =
+    Boolean(args.stdio) || process.env.CLOSURE_IDE_STDIO === "1";
+
+  if (!wantStdio) {
+    // Match Cursor/Figma remote shape — `type: "http"` is what surfaces Connect.
+    return { url: remoteMcpUrl(), type: "http" };
+  }
+
   const env = {
     STUDIO_URL: process.env.STUDIO_URL || "https://closureapps.com/console",
-    STUDIO_EMAIL: process.env.STUDIO_EMAIL || "you@yourcompany.com",
+    STUDIO_API_KEY: process.env.STUDIO_API_KEY || "",
+    STUDIO_EMAIL: process.env.STUDIO_EMAIL || "",
     STUDIO_PASSWORD: process.env.STUDIO_PASSWORD || "",
   };
 

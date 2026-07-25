@@ -1,31 +1,35 @@
 /**
- * Thin Closure HTTP client — cookie session (smoke pattern).
- * Not L1 cwk_ Bearer; Closure has no machine API keys yet.
+ * Thin Closure HTTP client.
+ * Prefer STUDIO_API_KEY (Bearer csk_…) — password login is legacy.
  */
 
 export type StudioConfig = {
   baseUrl: string;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  apiKey?: string;
 };
 
 export class StudioClient {
   readonly baseUrl: string;
   private readonly email: string;
   private readonly password: string;
+  private readonly apiKey: string | null;
   private cookie: string | null = null;
 
   constructor(cfg: StudioConfig) {
     this.baseUrl = cfg.baseUrl.replace(/\/$/, "");
-    this.email = cfg.email;
-    this.password = cfg.password;
+    this.email = cfg.email || "";
+    this.password = cfg.password || "";
+    this.apiKey = cfg.apiKey?.trim() || null;
   }
 
   static fromEnv(): StudioClient {
     return new StudioClient({
       baseUrl: process.env.STUDIO_URL || "http://localhost:3021",
-      email: process.env.STUDIO_EMAIL || "demo@closure.ai",
-      password: process.env.STUDIO_PASSWORD || "closure",
+      email: process.env.STUDIO_EMAIL || "",
+      password: process.env.STUDIO_PASSWORD || "",
+      apiKey: process.env.STUDIO_API_KEY || "",
     });
   }
 
@@ -66,20 +70,42 @@ export class StudioClient {
   }
 
   async getObject(id: string) {
-    return this.api<{ ok?: boolean; object?: Record<string, unknown>; error?: string }>(
-      `/api/graph/objects/${encodeURIComponent(id)}`,
-    );
+    return this.api<{
+      ok?: boolean;
+      object?: Record<string, unknown>;
+      error?: string;
+    }>(`/api/graph/objects/${encodeURIComponent(id)}`);
   }
 
   async putObject(id: string, body: Record<string, unknown>) {
-    return this.api<{ ok?: boolean; object?: Record<string, unknown>; error?: string }>(
-      `/api/graph/objects/${encodeURIComponent(id)}`,
-      { method: "PUT", body: JSON.stringify(body) },
-    );
+    return this.api<{
+      ok?: boolean;
+      object?: Record<string, unknown>;
+      error?: string;
+    }>(`/api/graph/objects/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
+
+  private authHeaders(): Record<string, string> {
+    if (this.apiKey) {
+      return { Authorization: `Bearer ${this.apiKey}` };
+    }
+    if (this.cookie) {
+      return { Cookie: this.cookie };
+    }
+    return {};
   }
 
   async ensureSession(): Promise<void> {
+    if (this.apiKey) return;
     if (this.cookie) return;
+    if (!this.email || !this.password) {
+      throw new Error(
+        "studio_auth_missing — set STUDIO_API_KEY (Account → IDE) or STUDIO_EMAIL + STUDIO_PASSWORD",
+      );
+    }
     const res = await fetch(`${this.baseUrl}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -108,19 +134,19 @@ export class StudioClient {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        Cookie: this.cookie!,
+        ...this.authHeaders(),
         ...(init.headers || {}),
       },
     });
     const json = (await res.json().catch(() => ({}))) as T;
-    if (res.status === 401) {
+    if (res.status === 401 && !this.apiKey) {
       this.cookie = null;
       await this.ensureSession();
       const retry = await fetch(`${this.baseUrl}${path}`, {
         ...init,
         headers: {
           "Content-Type": "application/json",
-          Cookie: this.cookie!,
+          ...this.authHeaders(),
           ...(init.headers || {}),
         },
       });

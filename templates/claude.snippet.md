@@ -7,3 +7,4 @@ Hard rails:
 2. Never collect secrets in chat — `platform_collect_start`.
 3. On `waiting_ide`, loop task → work → submit until the run completes.
 4. Confirm changes in the Closure Experience URL, not only in chat.
+5. Brand = Organization `design_system` → `--cp-*` (CIP-S-0003). No product hex / `is{Product}` chrome. See Closure-way brand skill.

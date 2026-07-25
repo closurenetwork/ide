@@ -11,3 +11,6 @@ You are building on **Closure Platform**. Prefer Platform MCP tools (`platform_*
 5. After UI changes, open `/experiences/{slug}` and confirm the **graph**, not only chat text.
 6. Never paste secrets, API keys, or PII into chat or MCP tool arguments — call `platform_collect_start`.
 7. Prefer **targeted craft** over full `wf-build-experience` rebuilds once an Experience exists.
+8. **Default recipes** (see `docs/EXPERIENCE-RECIPES.md`) — apply automatically unless the brief opts out:
+   - **i18n always on:** `content.sourceLocale=en`, `targetLocales` (es/fr/de or brief.locales), `localeBundles`, LanguageSwitcher, `{{@content}}` for chrome/hero/auth.
+   - **Auth when needed:** Closure-style standalone `/login` with **Sign in | Request access** tabs (`login_panel` + `workflowId` + `accessWorkflowId`). Header: centered product links · Sign in · Request access CTA. Never blank auth routes.
