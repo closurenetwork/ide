@@ -1,0 +1,23 @@
+---
+description: Closure Platform product SoT — DataObjects via IDE MCP, not hand-edited Experience TS
+alwaysApply: true
+---
+
+# Closure way — product graph (IDE)
+
+You are building on **Closure Platform**. Reasoning stays in the IDE; **persistence is the semantic graph**.
+
+## Hard rules
+
+1. **Product UI / IA / copy** (Experiences, pages, components, nav, CTAs) live as **DataObjects** in Closure (Studio / Postgres / pack JSON export) — **not** as hand-edited `packages/experiences/src/*-experience.ts`.
+2. **Mutate product** via Platform MCP: `platform_build_start` → `platform_agent_task` / `platform_agent_submit`, graph upsert APIs, or a **targeted craft** turn. Prefer those over inventing local TS trees.
+3. **Pack `*-experience.ts` is bootstrap only.** Editing it does **not** update the live org graph. Do not “fix the product” there.
+4. **Projection OK:** `packages/experiences-react` CSS/renderers may polish chrome. Copy/structure still come from the graph.
+5. **Workflow definitions** (`packages/sdk` fixtures, `wf-*`) are platform code — allowed. Wiring them into an Experience (pages, `form_slot`, `login_panel`) is a **graph** change.
+6. **Secrets:** `platform_collect_start` only — never chat or MCP args.
+7. **Do not full-rebuild** (`wf-build-experience`) for small updates — targeted craft / upsert.
+8. After graph changes: open `/experiences/{slug}`; if you wrote Postgres directly, **restart Studio** so RAM hydrates (or upsert through Studio APIs that write RAM + write-through).
+
+## When tempted to edit Experience TS
+
+Stop. Ask: “Can this be a DataObject upsert / craft prompt?” If yes, do that. Only touch pack TS when deliberately changing **bootstrap seed generators**, then re-export pack + install into the org — never treat the `.ts` as the running product.

@@ -1,0 +1,16 @@
+---
+description: Block treating Experience pack TypeScript as product SoT
+globs: packages/experiences/src/**/*experience*.ts,packages/experiences/src/gtmsignal*.ts
+alwaysApply: false
+---
+
+# Stop — this file is not the live product
+
+You opened a **bootstrap** Experience graph in TypeScript.
+
+- **Live product** = DataObjects in `org_*` (Studio Experience editor / semantic store).
+- Edits here **will not** show up for users until pack export + install, and even then prefer mutating the live graph first.
+- For GTMSignal / customer Experiences: use Platform MCP + graph upserts, or `apps/studio/scripts/gtm-*.mjs` that write DataObjects with `org_id` correct.
+- Allowed here: fixing seed **generators**, deterministic IDs, export scripts — not day-to-day copy/IA/auth pages.
+
+Redirect work to the Closure graph.

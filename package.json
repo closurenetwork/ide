@@ -1,0 +1,51 @@
+{
+  "name": "@closure-platform/ide",
+  "version": "0.1.0",
+  "description": "Closure Platform IDE kit — MCP control plane + doctrine rails for Cursor, Claude Code, and MCP hosts.",
+  "type": "module",
+  "bin": {
+    "closure-ide": "./bin/closure-ide.mjs",
+    "platform-mcp": "./mcp/bin/platform-mcp.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "doctrine",
+    "templates",
+    "mcp/bin",
+    "mcp/dist",
+    "mcp/skills"
+  ],
+  "scripts": {
+    "build": "node mcp/esbuild.config.mjs",
+    "build:mcp": "node mcp/esbuild.config.mjs",
+    "typecheck": "tsc -p mcp/tsconfig.json --noEmit",
+    "test": "node --test src/**/*.test.mjs 2>/dev/null || node --test src/export-doctrine.test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "closure",
+    "mcp",
+    "cursor",
+    "claude",
+    "ide",
+    "agent"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/closurenetwork/ide.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.8.3"
+  }
+}
