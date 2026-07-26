@@ -1,6 +1,6 @@
 # @closurenetwork/ide
 
-Closure Agent Pack for your IDE. Install from npm — **never clone this repo.**
+Closure Agent Pack for your IDE. Published on **[npmjs.org](https://www.npmjs.com/package/@closurenetwork/ide)** under the `closurenetwork` org — **never clone this repo.**
 
 This package is a **thin installer**. AGENTS.md, Cursor rules, and Closure-way skills are fetched from Closure Platform Knowledge (`GET /api/public/ide/pack`) — not hardcoded here.
 

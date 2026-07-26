@@ -2,44 +2,45 @@
 
 Customers use `npx @closurenetwork/ide` only. This file is for people who publish the package.
 
-## Publish (npmjs.org — preferred)
+## npm strategy
 
-`npx` discovery and zero-auth installs require the **public npm registry**, not GitHub Packages.
+| | |
+|--|--|
+| **Package** | [`@closurenetwork/ide`](https://www.npmjs.com/package/@closurenetwork/ide) |
+| **Registry** | **npmjs.org** (public) — required for zero-auth `npx` |
+| **Org / scope** | npm org **`closurenetwork`** (matches GitHub). `@closure/*` is unavailable (unscoped `closure` package already taken). |
+| **Not used** | GitHub Packages — forces consumer auth / `.npmrc` and breaks `npx` |
+| **Source** | This repo — never tell customers to clone it |
 
-1. Create / join the npm org **`closure`** (https://www.npmjs.com/org/create).
-2. Ensure you can publish: `npm owner ls @closurenetwork/ide` (after first publish) or org membership.
-3. From this repo:
+## Publish
+
+You must be a member of the `closurenetwork` npm org (`npm whoami` → your user; `npm org ls closurenetwork`).
 
 ```bash
 npm run build && npm test
 npm publish --access public
 ```
 
-`prepublishOnly` builds the MCP bundle into `mcp/dist/`.
-
-### Do not use GitHub Packages for this package
-
-GitHub Packages needs `NODE_AUTH_TOKEN` / `.npmrc` scope config for every consumer. That breaks the `npx @closurenetwork/ide init` story. Keep source on GitHub; publish the tarball to `registry.npmjs.org`.
+`prepublishOnly` builds the MCP bundle into `mcp/dist/`. Bump `package.json` version before each publish.
 
 ## Dogfood before publish
 
 ```bash
-# Platform must serve the pack (local or SaaS after Deploy)
-curl -s http://localhost:3021/api/public/ide/pack | head
+# Pack API (local Studio or SaaS after Deploy)
+curl -s https://closureapps.com/console/api/public/ide/pack | head
+# or: curl -s http://localhost:3021/api/public/ide/pack | head
 
-CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack \
-  node bin/closure-ide.mjs init --cwd /tmp/closure-ide-smoke --no-mcp
-
-node bin/closure-ide.mjs status --cwd /tmp/closure-ide-smoke
+npx @closurenetwork/ide@latest init --cwd /tmp/closure-ide-smoke
+npx @closurenetwork/ide@latest status --cwd /tmp/closure-ide-smoke
 ```
 
 Local MCP binary (maintainers):
 
 ```bash
-CLOSURE_IDE_LOCAL=1 CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack \
+CLOSURE_IDE_LOCAL=1 STUDIO_URL=http://localhost:3021 \
   node bin/closure-ide.mjs init --cwd /path/to/project --stdio
 ```
 
 ## Knowledge SoT
 
-Edit IDE rails in **platform** (`apps/studio/src/lib/server/ide-pack.ts` seed → platform org Knowledge `IDE Pack · <path>`). Customers pick up changes with `npx @closurenetwork/ide sync` — no kit bump required unless the CLI itself changes.
+Edit IDE rails in **platform** (`apps/studio/src/lib/server/ide-pack.ts` → platform org Knowledge `IDE Pack · <path>`). Customers pick up doctrine changes with `npx @closurenetwork/ide sync` — bump this kit only when the CLI / MCP shell changes.
