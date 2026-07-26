@@ -22,7 +22,7 @@ export async function cmdInit(args) {
     const mcp = studioUrl
       ? {
           ...(pack.mcp || {}),
-          name: pack.mcp?.name || "closure-platform",
+          name: pack.mcp?.name || "closure",
           url: `${String(studioUrl).replace(/\/$/, "")}/api/mcp`,
           type: pack.mcp?.type || "http",
         }

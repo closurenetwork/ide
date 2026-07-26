@@ -8,6 +8,10 @@ export function remoteMcpUrl(studioUrl) {
     return process.env.STUDIO_MCP_URL.replace(/\/$/, "");
   }
   const base = (studioUrl || defaultStudioUrl()).replace(/\/$/, "");
+  // SaaS default: dedicated MCP host (no /console path in client config).
+  if (base === "https://closureapps.com/console") {
+    return "https://mcp.closureapps.com";
+  }
   return `${base}/api/mcp`;
 }
 
@@ -17,7 +21,7 @@ export function remoteMcpUrl(studioUrl) {
 export function mcpEntry(args) {
   const wantStdio =
     Boolean(args.stdio) || process.env.CLOSURE_IDE_STDIO === "1";
-  const name = args.mcp?.name || "closure-platform";
+  const name = args.mcp?.name || "closure";
 
   if (!wantStdio) {
     return {
@@ -69,9 +73,9 @@ export async function writeMcpConfig(args) {
     doc.mcpServers = {};
   }
   doc.mcpServers[name] = entry;
-  // Keep legacy key pointing at same entry for older docs
-  if (name === "closure-platform" && !doc.mcpServers.closure) {
-    /* no alias */
+  // Migrate legacy mcp.json key from early kit installs
+  if (name === "closure" && doc.mcpServers["closure-platform"]) {
+    delete doc.mcpServers["closure-platform"];
   }
   await writeFile(path, `${JSON.stringify(doc, null, 2)}\n`, "utf8");
   return path;

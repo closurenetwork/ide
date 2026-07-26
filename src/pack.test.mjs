@@ -13,7 +13,7 @@ const FIXTURE_PACK = {
   updatedAt: "2026-07-25T00:00:00.000Z",
   studioUrl: "https://closureapps.com/console",
   mcp: {
-    name: "closure-platform",
+    name: "closure",
     url: "https://closureapps.com/console/api/mcp",
     type: "http",
   },

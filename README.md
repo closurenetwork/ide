@@ -34,8 +34,8 @@ CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack npx @closurenetwo
 ```json
 {
   "mcpServers": {
-    "closure-platform": {
-      "url": "https://closureapps.com/console/api/mcp",
+    "closure": {
+      "url": "https://mcp.closureapps.com",
       "type": "http"
     }
   }
@@ -51,7 +51,7 @@ npx @closurenetwork/ide init --stdio
 ```json
 {
   "mcpServers": {
-    "closure-platform": {
+    "closure": {
       "command": "npx",
       "args": ["-y", "@closurenetwork/ide", "mcp-stdio"],
       "env": {

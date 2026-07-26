@@ -119,7 +119,7 @@ design_token_set[] → design_theme (light/dark) → design_system → design_sp
 
 async function main(): Promise<void> {
   const server = new McpServer(
-    { name: "closure-platform-mcp", version: "0.1.0" },
+    { name: "closure", version: "0.1.0" },
     {
       capabilities: { tools: {}, logging: {} },
       instructions:
@@ -159,7 +159,7 @@ async function main(): Promise<void> {
           orgId: json.orgId,
           role: json.role,
           plan: json.plan,
-          controlPlane: "closure-platform-mcp",
+          controlPlane: "closure",
           docs: "docs/IDE-CONTROL-PLANE.md",
         });
       } catch (e) {

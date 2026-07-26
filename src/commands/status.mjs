@@ -46,13 +46,18 @@ export async function cmdStatus(args) {
   try {
     const raw = await readFile(join(cwd, ".cursor", "mcp.json"), "utf8");
     const j = JSON.parse(raw);
-    if (j.mcpServers?.["closure-platform"]) {
-      const e = j.mcpServers["closure-platform"];
+    const mcpKey = j.mcpServers?.closure
+      ? "closure"
+      : j.mcpServers?.["closure-platform"]
+        ? "closure-platform"
+        : null;
+    if (mcpKey) {
+      const e = j.mcpServers[mcpKey];
       console.log(
-        `ok   MCP closure-platform (${e.url ? "remote Connect" : "stdio"})`,
+        `ok   MCP ${mcpKey}${mcpKey === "closure-platform" ? " (legacy — run sync)" : ""} (${e.url ? "remote Connect" : "stdio"})`,
       );
     } else {
-      console.log("WARN .cursor/mcp.json missing closure-platform");
+      console.log("WARN .cursor/mcp.json missing closure");
     }
   } catch {
     console.log("WARN no .cursor/mcp.json (run init)");

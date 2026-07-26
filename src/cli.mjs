@@ -46,7 +46,7 @@ export async function runCli(argv) {
     case "mcp":
       console.log(`Preferred: remote URL in mcp.json (Cursor Connect).
 
-  { "mcpServers": { "closure-platform": { "url": "https://closureapps.com/console/api/mcp", "type": "http" } } }
+  { "mcpServers": { "closure": { "url": "https://mcp.closureapps.com", "type": "http" } } }
 
 Stdio fallback: npx -y @closurenetwork/ide mcp-stdio
 `);
