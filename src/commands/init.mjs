@@ -17,12 +17,22 @@ export async function cmdInit(args) {
   for (const p of written) console.log(`  ${p}`);
 
   if (!args.noMcp) {
+    // Prefer caller STUDIO_URL over pack defaults (local dogfood vs SaaS).
+    const studioUrl = process.env.STUDIO_URL || pack.studioUrl;
+    const mcp = studioUrl
+      ? {
+          ...(pack.mcp || {}),
+          name: pack.mcp?.name || "closure-platform",
+          url: `${String(studioUrl).replace(/\/$/, "")}/api/mcp`,
+          type: pack.mcp?.type || "http",
+        }
+      : pack.mcp;
     const path = await writeMcpConfig({
       cwd: args.cwd,
       globalMcp: args.globalMcp,
       stdio: args.stdio,
-      studioUrl: pack.studioUrl,
-      mcp: pack.mcp,
+      studioUrl,
+      mcp,
     });
     console.log(`\nMCP config: ${path}`);
   }

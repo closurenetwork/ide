@@ -1,9 +1,10 @@
 {
   "name": "@closurenetwork/ide",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Closure Agent Pack installer — npx @closurenetwork/ide init. Rails from Platform Knowledge; local files are never product SoT.",
   "type": "module",
   "bin": {
+    "ide": "./bin/closure-ide.mjs",
     "closure-ide": "./bin/closure-ide.mjs",
     "platform-mcp": "./mcp/bin/platform-mcp.mjs"
   },
