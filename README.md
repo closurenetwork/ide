@@ -19,11 +19,17 @@ Full docs: [closureapps.com/docs/ide](https://closureapps.com/docs/ide).
 
 ## Install
 
+Run this in a **normal terminal** (Cursor’s integrated terminal or iTerm/Terminal.app) — not via the Agent’s Shell tool:
+
 ```bash
-npx @closurenetwork/ide init
+npx @closurenetwork/ide@latest init
 ```
 
 Then reload MCP → **Connect** → call `platform_status` → `platform_knowledge_skills_pull`.
+
+### Why not from the Agent?
+
+Cursor sandboxes agent shell commands. `init` needs outbound network (`registry.npmjs.org` + Closure) **and** writes `.cursor/mcp.json`. Cursor hard-protects `.cursor/*.json` from the agent (by design — so agents can’t silently rewrite MCP/auth config). A real terminal has neither restriction. After init, the agent can still refresh rails via `npx @closurenetwork/ide sync` (rules/skills live under writable `.cursor/` subdirs) and work through Connect.
 
 ### On-prem / local Studio
 
