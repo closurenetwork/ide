@@ -91,7 +91,7 @@ export async function applyIdePack(opts) {
   const metaPath = join(cwd, ".closure", "pack.json");
   await mkdir(dirname(metaPath), { recursive: true });
   const meta = {
-    package: pack.package || "@closure/ide",
+    package: pack.package || "@closurenetwork/ide",
     version: pack.version,
     updatedAt: pack.updatedAt || null,
     fetchedAt: new Date().toISOString(),

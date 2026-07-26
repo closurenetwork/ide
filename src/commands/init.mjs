@@ -13,7 +13,7 @@ export async function cmdInit(args) {
     packUrl,
   });
 
-  console.log(`\nInstalled ${pack.package || "@closure/ide"} @ ${meta.version}`);
+  console.log(`\nInstalled ${pack.package || "@closurenetwork/ide"} @ ${meta.version}`);
   for (const p of written) console.log(`  ${p}`);
 
   if (!args.noMcp) {
@@ -35,7 +35,7 @@ Next:
   1. Reload MCP in Cursor — click Connect when prompted
   2. Sign in / Allow in the browser
   3. Call platform_status → platform_knowledge_skills_pull
-  4. Later: npx @closure/ide sync
+  4. Later: npx @closurenetwork/ide sync
 `
       : `
 Next:

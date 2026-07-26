@@ -47,7 +47,7 @@ export function mcpEntry(args) {
     name,
     entry: {
       command: "npx",
-      args: ["-y", "@closure/ide", "mcp-stdio"],
+      args: ["-y", "@closurenetwork/ide", "mcp-stdio"],
       env,
     },
   };

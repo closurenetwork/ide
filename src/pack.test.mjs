@@ -8,7 +8,7 @@ import { applyIdePack, fetchIdePack } from "./pack.mjs";
 
 const FIXTURE_PACK = {
   ok: true,
-  package: "@closure/ide",
+  package: "@closurenetwork/ide",
   version: "ide_testfixture0001",
   updatedAt: "2026-07-25T00:00:00.000Z",
   studioUrl: "https://closureapps.com/console",
@@ -60,7 +60,7 @@ test("applyIdePack writes rails + .closure/pack.json", async () => {
   const packMeta = JSON.parse(
     await readFile(join(cwd, ".closure", "pack.json"), "utf8"),
   );
-  assert.equal(packMeta.package, "@closure/ide");
+  assert.equal(packMeta.package, "@closurenetwork/ide");
 });
 
 test("fetchIdePack reads JSON from HTTP", async () => {

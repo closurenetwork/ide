@@ -1,4 +1,4 @@
-# @closure/ide
+# @closurenetwork/ide
 
 Closure Agent Pack for your IDE. Install from npm — **never clone this repo.**
 
@@ -7,7 +7,7 @@ This package is a **thin installer**. AGENTS.md, Cursor rules, and Closure-way s
 ## Install
 
 ```bash
-npx @closure/ide init
+npx @closurenetwork/ide init
 ```
 
 Then reload MCP → **Connect** → call `platform_status` → `platform_knowledge_skills_pull`.
@@ -15,9 +15,9 @@ Then reload MCP → **Connect** → call `platform_status` → `platform_knowled
 ### On-prem / local Studio
 
 ```bash
-STUDIO_URL=http://localhost:3021 npx @closure/ide init
+STUDIO_URL=http://localhost:3021 npx @closurenetwork/ide init
 # or
-CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack npx @closure/ide init
+CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack npx @closurenetwork/ide init
 ```
 
 ## Commands
@@ -45,7 +45,7 @@ CLOSURE_IDE_PACK_URL=http://localhost:3021/api/public/ide/pack npx @closure/ide 
 ### Fallback — stdio + API key
 
 ```bash
-npx @closure/ide init --stdio
+npx @closurenetwork/ide init --stdio
 ```
 
 ```json
@@ -53,7 +53,7 @@ npx @closure/ide init --stdio
   "mcpServers": {
     "closure-platform": {
       "command": "npx",
-      "args": ["-y", "@closure/ide", "mcp-stdio"],
+      "args": ["-y", "@closurenetwork/ide", "mcp-stdio"],
       "env": {
         "STUDIO_URL": "https://closureapps.com/console",
         "STUDIO_API_KEY": "csk_…"

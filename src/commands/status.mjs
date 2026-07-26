@@ -17,7 +17,7 @@ export async function cmdStatus(args) {
     }
   }
 
-  console.log(`@closure/ide status`);
+  console.log(`@closurenetwork/ide status`);
   console.log(`  cwd:    ${cwd}`);
   console.log(`  studio: ${defaultStudioUrl()}`);
   console.log(`  pack:   ${defaultPackUrl()}`);
@@ -30,7 +30,7 @@ export async function cmdStatus(args) {
     console.log(`ok   local pack ${local.version} (fetched ${local.fetchedAt || "?"})`);
   } else {
     ok = false;
-    console.log("FAIL no .closure/pack.json — run: npx @closure/ide init");
+    console.log("FAIL no .closure/pack.json — run: npx @closurenetwork/ide init");
   }
 
   await check("AGENTS.md rails", async () => {
@@ -64,7 +64,7 @@ export async function cmdStatus(args) {
       console.log(`ok   remote pack matches (${remote.version})`);
     } else if (local?.version) {
       console.log(
-        `WARN remote pack ${remote.version} ≠ local ${local.version} — run: npx @closure/ide sync`,
+        `WARN remote pack ${remote.version} ≠ local ${local.version} — run: npx @closurenetwork/ide sync`,
       );
     } else {
       console.log(`ok   remote pack ${remote.version} (${remote.files.length} files)`);

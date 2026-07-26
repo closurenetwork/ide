@@ -6,13 +6,13 @@ import { cmdDoctor } from "./commands/doctor.mjs";
 import { pkgRoot } from "./paths.mjs";
 
 const HELP = `
-@closure/ide — Closure Agent Pack
+@closurenetwork/ide — Closure Agent Pack
 
-  npx @closure/ide init      # fetch pack + write rails + register MCP
-  npx @closure/ide sync      # re-fetch pack from Platform Knowledge
-  npx @closure/ide status    # local + remote pack health
-  npx @closure/ide doctor    # alias of status
-  npx @closure/ide update    # alias of sync
+  npx @closurenetwork/ide init      # fetch pack + write rails + register MCP
+  npx @closurenetwork/ide sync      # re-fetch pack from Platform Knowledge
+  npx @closurenetwork/ide status    # local + remote pack health
+  npx @closurenetwork/ide doctor    # alias of status
+  npx @closurenetwork/ide update    # alias of sync
 
 Options:
   --cwd <path>      target directory (default: .)
@@ -48,7 +48,7 @@ export async function runCli(argv) {
 
   { "mcpServers": { "closure-platform": { "url": "https://closureapps.com/console/api/mcp", "type": "http" } } }
 
-Stdio fallback: npx -y @closure/ide mcp-stdio
+Stdio fallback: npx -y @closurenetwork/ide mcp-stdio
 `);
       return 0;
     case "mcp-stdio": {
