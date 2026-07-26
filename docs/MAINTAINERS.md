@@ -12,16 +12,31 @@ Customers use `npx @closurenetwork/ide` only. This file is for people who publis
 | **Not used** | GitHub Packages — forces consumer auth / `.npmrc` and breaks `npx` |
 | **Source** | This repo — never tell customers to clone it |
 
-## Publish
+## Publish (CI — preferred)
 
-You must be a member of the `closurenetwork` npm org (`npm whoami` → your user; `npm org ls closurenetwork`).
+Do **not** publish from a laptop for routine releases. GitHub Actions publishes to npmjs when you push a version tag.
+
+1. Add repo secret **`NPM_TOKEN`** (https://github.com/closurenetwork/ide/settings/secrets/actions) — granular npm token with **Publish** on the `closurenetwork` org.
+2. Bump `package.json` `version`, commit to `main`.
+3. Tag and push (tag must match the version):
+
+```bash
+git tag v0.2.2
+git push origin v0.2.2
+```
+
+4. Watch **Publish** under Actions. Optional: **workflow_dispatch** with dry-run.
+
+### Local publish (emergency only)
+
+You must be a member of the `closurenetwork` npm org (`npm whoami`; `npm org ls closurenetwork`).
 
 ```bash
 npm run build && npm test
 npm publish --access public
 ```
 
-`prepublishOnly` builds the MCP bundle into `mcp/dist/`. Bump `package.json` version before each publish.
+`prepublishOnly` builds the MCP bundle into `mcp/dist/`.
 
 ## Dogfood before publish
 
