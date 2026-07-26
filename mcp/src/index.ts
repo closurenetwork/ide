@@ -57,7 +57,7 @@ const BUNDLED_SKILLS: { id: string; name: string; content: string }[] = [
     name: "Closure way — semantic graph",
     content: `# Closure way — semantic graph
 
-You are building on **Closure Platform**. Prefer Platform MCP tools (\`platform_*\`) over inventing local JSON or editing Experience TypeScript.
+You are building on **Closure**. Prefer Platform MCP tools (\`platform_*\`) over inventing local JSON or editing Experience TypeScript.
 
 ## Rules
 1. Experiences, pages, components are **DataObjects** — not \`packages/experiences/src/*-experience.ts\` as SoT.
@@ -89,10 +89,11 @@ You are building on **Closure Platform**. Prefer Platform MCP tools (\`platform_
 1. Your IDE model does **reasoning**; Closure owns **persistence, validation, audit, vault**.
 2. Do not burn Platform LLM keys for authoring when local tools can do the work.
 3. Prefer structured upserts / scaffold / craft loops over freeform prose that claims the app was built.
-4. L1 \`closure.*\` MCP is for gateway JSON-LD. Closure Platform uses \`platform_*\`.
+4. L1 \`closure.*\` MCP is for gateway JSON-LD. Closure uses Platform MCP (\`platform_*\`).
 5. Product mutations go through Platform MCP / graph APIs — not Experience pack \`.ts\`.
 6. On \`waiting_ide\`, loop task → work → submit until completed / HITL.
 7. Secrets: \`platform_collect_start\` only.
+8. Rails kit: \`npx @closurenetwork/ide\` (npmjs).
 `,
   },
   {
@@ -106,7 +107,7 @@ Organization owns one \`design_system\`. Experiences inherit. Shells consume \`-
 design_token_set[] → design_theme (light/dark) → design_system → design_spec → Experience.theme.designSystemId → runtime \`--cp-*\`
 
 ## Rules
-1. One brand per Organization (Studio Branding / brand.upsert) — not per page.
+1. One brand per Organization (Account → Branding / brand.upsert) — not per page.
 2. No product hex in React/CSS — \`var(--cp-*)\` only. No \`is{Product}\` chrome or \`--exp-{product}-*\`.
 3. Kits (\`signal-heat\`, …) set type/density/radius/componentStyles.
 4. Prove control: change accent/font/spacing tokens → first paint changes without CSS edits.
@@ -122,7 +123,7 @@ async function main(): Promise<void> {
     {
       capabilities: { tools: {}, logging: {} },
       instructions:
-        "Closure Platform IDE MCP. Use platform_* tools against Closure SaaS by default (STUDIO_URL=https://closureapps.com/console). After Experience scaffolds, open /experiences/{slug} on that host. For secrets, use platform_collect_start — never collect secrets in chat. L1 closure-kit MCP (closure.*) is a different server.",
+        "Closure IDE MCP (platform_*). Default host: Closure SaaS (https://closureapps.com/console). After Experience scaffolds, open /experiences/{slug}. Secrets: platform_collect_start only. Kit: npx @closurenetwork/ide. L1 closure-kit (closure.*) is a different server.",
     },
   );
 
