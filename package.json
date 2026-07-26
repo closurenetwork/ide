@@ -1,6 +1,6 @@
 {
   "name": "@closurenetwork/ide",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Closure Agent Pack installer — npx @closurenetwork/ide init. Rails from Platform Knowledge; local files are never product SoT.",
   "type": "module",
   "bin": {
