@@ -1,6 +1,6 @@
 {
   "name": "@closurenetwork/ide",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Closure Agent Pack installer — npx @closurenetwork/ide init. Rails from Platform Knowledge; local files are never product SoT.",
   "type": "module",
   "bin": {
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "node mcp/esbuild.config.mjs",
     "typecheck": "tsc -p mcp/tsconfig.json --noEmit",
-    "test": "node --test src/*.test.mjs",
+    "test": "node --test src/mcp-config.test.mjs src/pack.test.mjs",
     "prepublishOnly": "npm run build && npm test"
   },
   "engines": {

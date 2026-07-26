@@ -14,7 +14,7 @@ const FIXTURE_PACK = {
   studioUrl: "https://closureapps.com/console",
   mcp: {
     name: "closure",
-    url: "https://closureapps.com/console/api/mcp",
+    url: "https://mcp.closureapps.com",
     type: "http",
   },
   files: [

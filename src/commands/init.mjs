@@ -1,5 +1,5 @@
 import { applyIdePack, fetchIdePack } from "../pack.mjs";
-import { writeMcpConfig } from "../mcp-config.mjs";
+import { remoteMcpUrl, writeMcpConfig } from "../mcp-config.mjs";
 import { defaultPackUrl } from "../paths.mjs";
 
 export async function cmdInit(args) {
@@ -18,15 +18,20 @@ export async function cmdInit(args) {
 
   if (!args.noMcp) {
     // Prefer caller STUDIO_URL over pack defaults (local dogfood vs SaaS).
+    // MCP URL: pack.mcp.url (platform sets CLOSURE_MCP_PUBLIC_URL) → else
+    // remoteMcpUrl(studio) which maps SaaS console → mcp.closureapps.com.
+    // Never invent `${studioUrl}/api/mcp` here — that broke Connect when the
+    // PRM resource is the dedicated MCP host.
     const studioUrl = process.env.STUDIO_URL || pack.studioUrl;
-    const mcp = studioUrl
-      ? {
-          ...(pack.mcp || {}),
-          name: pack.mcp?.name || "closure",
-          url: `${String(studioUrl).replace(/\/$/, "")}/api/mcp`,
-          type: pack.mcp?.type || "http",
-        }
-      : pack.mcp;
+    const mcp = {
+      ...(pack.mcp || {}),
+      name: pack.mcp?.name || "closure",
+      url:
+        process.env.STUDIO_MCP_URL ||
+        pack.mcp?.url ||
+        remoteMcpUrl(studioUrl),
+      type: pack.mcp?.type || "http",
+    };
     const path = await writeMcpConfig({
       cwd: args.cwd,
       globalMcp: args.globalMcp,
@@ -35,6 +40,9 @@ export async function cmdInit(args) {
       mcp,
     });
     console.log(`\nMCP config: ${path}`);
+    if (!args.stdio && mcp.url) {
+      console.log(`  Connect URL: ${mcp.url}`);
+    }
   }
 
   const remote = !args.stdio;
