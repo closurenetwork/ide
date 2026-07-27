@@ -26,7 +26,11 @@ export class StudioClient {
 
   static fromEnv(): StudioClient {
     return new StudioClient({
-      baseUrl: process.env.STUDIO_URL || "http://localhost:3021",
+      // Default = SaaS console. Local Studio is for platform engineering only.
+      baseUrl:
+        process.env.STUDIO_URL ||
+        process.env.CLOSURE_STUDIO_URL ||
+        "https://closureapps.com/console",
       email: process.env.STUDIO_EMAIL || "",
       password: process.env.STUDIO_PASSWORD || "",
       apiKey: process.env.STUDIO_API_KEY || "",

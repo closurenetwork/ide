@@ -6,6 +6,36 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StudioClient } from "./studio-client.js";
 import { projectExperienceTree } from "./experience-project.js";
+import { experienceOpenUrl } from "./experience-open-url.js";
+
+/** Best-effort product Host openUrl from a GET /api/experience/{slug} payload. */
+async function openUrlForSlug(
+  api: StudioClient,
+  slug: string | undefined,
+): Promise<string> {
+  const studio = api.baseUrl;
+  if (!slug) return `${studio}/experiences`;
+  try {
+    const { ok, json } = await api.getExperience(slug);
+    if (ok) {
+      const graph = (json.graph || {}) as Record<string, unknown>;
+      const experience = (graph.experience || {}) as {
+        data?: {
+          theme?: { primaryHost?: string; domain?: string };
+          hosts?: string[];
+        };
+      };
+      return experienceOpenUrl({
+        studioUrl: studio,
+        slug,
+        graph: experience.data || null,
+      });
+    }
+  } catch {
+    /* fall through */
+  }
+  return experienceOpenUrl({ studioUrl: studio, slug });
+}
 
 /**
  * Closure Platform IDE MCP (stdio).
@@ -383,11 +413,9 @@ async function main(): Promise<void> {
           experienceId: json.experienceId,
           experienceSlug: slug,
           experienceName: json.experienceName,
-          openUrl: slug
-            ? `${api.baseUrl}/experiences/${slug}`
-            : `${api.baseUrl}/experiences`,
+          openUrl: await openUrlForSlug(api, slug),
           result: json.result,
-          tip: "Open openUrl in the browser. Next: add pages/workflows via Assistant or graph tools; secrets via platform_collect_start.",
+          tip: "Open openUrl in the browser (product Host when claimed). Next: add pages/workflows via Assistant or graph tools; secrets via platform_collect_start.",
         });
       } catch (e) {
         return asError(e);
@@ -510,13 +538,23 @@ async function main(): Promise<void> {
         if (!ok) return asJson({ ok: false, status, error: json });
         const graph = (json.graph || {}) as Record<string, unknown>;
         if (args.view === "full") {
+          const experience = (graph.experience || {}) as {
+            data?: {
+              theme?: { primaryHost?: string; domain?: string };
+              hosts?: string[];
+            };
+          };
           return asJson({
             ok: true,
             orgId: json.orgId ?? args.orgId,
             slug: args.slug,
             source: json.source,
             graph,
-            openUrl: `${api.baseUrl}/experiences/${args.slug}`,
+            openUrl: experienceOpenUrl({
+              studioUrl: api.baseUrl,
+              slug: args.slug,
+              graph: experience.data || null,
+            }),
           });
         }
         return asJson(
@@ -599,10 +637,8 @@ async function main(): Promise<void> {
           orgId: args.orgId,
           componentId: args.componentId,
           object: put.json.object,
-          openUrl: slug
-            ? `${api.baseUrl}/experiences/${slug}`
-            : `${api.baseUrl}/experiences`,
-          tip: "Hard-refresh the Experience URL. Prefer craft over wf-build-experience for copy/IA tweaks.",
+          openUrl: await openUrlForSlug(api, slug),
+          tip: "Hard-refresh openUrl (product Host when claimed). Prefer craft over wf-build-experience for copy/IA tweaks.",
         });
       } catch (e) {
         return asError(e);

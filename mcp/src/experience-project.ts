@@ -3,6 +3,8 @@
  * Full graph stays on Studio; MCP returns page tree + props by default.
  */
 
+import { experienceOpenUrl } from "./experience-open-url.js";
+
 type AnyRec = Record<string, unknown>;
 
 export type TreeNode = {
@@ -101,11 +103,15 @@ export function projectExperienceTree(opts: {
     pages,
     page,
     tree,
-    openUrl: `${opts.studioUrl.replace(/\/$/, "")}/experiences/${slug}${
-      page?.route && page.route !== "/"
-        ? `?route=${encodeURIComponent(page.route)}`
-        : ""
-    }`,
-    tip: "Targeted craft: platform_craft_start with componentId + propsPatch. Do not full-rebuild for copy tweaks.",
+    openUrl: experienceOpenUrl({
+      studioUrl: opts.studioUrl,
+      slug,
+      graph: expData as {
+        theme?: { primaryHost?: string; domain?: string };
+        hosts?: string[];
+      },
+      route: page?.route,
+    }),
+    tip: "Targeted craft: platform_craft_start with componentId + propsPatch. Do not full-rebuild for copy tweaks. openUrl prefers the product Host when claimed.",
   };
 }
